@@ -31,7 +31,7 @@ DOWNLOAD_URL='http://downloads.sourceforge.net/project/vsido/'
 CHECKSUM_FILE_EXTENSION='.md5'
 CHECKSUM_COMMAND='/usr/bin/md5sum -c'
 MAKE_TORRENT_COMMAND="/usr/bin/btmakemetafile http://tracker.aibor.de:46969/announce \
-    --announce_list 'http://tracker.aibor.de:46969/announce|http://bttracker.crunchbanglinux.org:6969/announce'"
+    --announce_list http://tracker.aibor.de:46969/announce|http://bttracker.crunchbanglinux.org:6969/announce"
     #|udp://tracker.ccc.de:80/announce,udp://tracker.openbittorrent.com:80/announce'"
 
 # make temporary working dir
