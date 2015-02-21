@@ -35,9 +35,6 @@ CHECKSUM_COMMAND='md5sum -c'
 MAKE_TORRENT_COMMAND="/usr/bin/btmakemetafile http://tracker.aibor.de:46969/announce \
   --announce_list http://tracker.aibor.de:46969/announce"
 
-# make temporary working dir
-WORKING_DIR="$(/bin/mktemp -d)"
-
 
 # map some exit messages to a return value
 MSG[1]='wget not available in PATH'
@@ -96,7 +93,7 @@ _sync "${PROJECT_PAGE}" || _quit 3
 shopt -s nullglob
 for image in *.iso
 do
-  #_check_checksum "${image}" || _warn 4 "${image}"
+  _check_checksum "${image}" || _warn 4 "${image}"
   _make_torrent "${image}" || _warn 5 "${image}"
 done
 
