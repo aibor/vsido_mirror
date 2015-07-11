@@ -63,7 +63,7 @@ _quit() {
 _sync() {
   (( $# )) || return 1
   wget -A "*.iso,*${CHECKSUM_FILE_EXTENSION:-.md5}" -r -nd -N "$1" \
-#    &>/dev/null
+    &>/dev/null
 }
 
 
