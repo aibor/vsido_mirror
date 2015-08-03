@@ -2,7 +2,7 @@ vsido_mirror
 ============
 
 This script mirrors [VSIDO][1] [download page][2].
-For each iso image a torrent file is created. 
+md5 checksums are checked if provided.
 
 It is intended to be run regularly (eg. by a cronjob).
 
@@ -13,5 +13,4 @@ It is intended to be run regularly (eg. by a cronjob).
 # Requirements
 
 * wget
-* bittornado
 

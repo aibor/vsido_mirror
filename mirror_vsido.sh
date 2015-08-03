@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/local/bin/bash
 #
 #            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
 #                    Version 2, December 2004
@@ -17,9 +17,8 @@
 #
 # @author: aibo ( arrrrr ) aibor ( dot ) de
 #
-# Fetch iso images from the VSIDO project download page and create
-# torrents for all images. The page should also have md5 files for the
-# images.
+# Fetch iso images from the VSIDO project download page. The page should
+# also have md5 files for the images.
 #
 # Happy image fetching!
 #
@@ -30,18 +29,15 @@ set -u
 
 TARGET_DIR='/srv/mirror.aibor.de/vsido/iso/'
 PROJECT_PAGE='http://www.nixnut.com/vsido/' 
-CHECKSUM_FILE_EXTENSION='.md5'
-CHECKSUM_COMMAND='md5sum -c'
-MAKE_TORRENT_COMMAND="/usr/bin/btmakemetafile http://tracker.aibor.de:46969/announce \
-  --announce_list http://tracker.aibor.de:46969/announce"
 
 
 # map some exit messages to a return value
+declare -a MSG
 MSG[1]='wget not available in PATH'
 MSG[2]='checksum command not available in PATH'
 MSG[3]='Unable to sync project page'
 MSG[4]='checksum doesn`t match'
-MSG[5]='Failed to create torrent'
+MSG[5]='checksum checking not available'
 
 
 _warn() {
@@ -59,32 +55,39 @@ _quit() {
 }
 
 
+# Check the checksum using the md5 tool available on FreeBSD
+_md5_check() {
+  (( $# )) || return 1
+  local -a sumfile_line=($(<$1))
+  local -a checksum_line=($(md5 "${sumfile_line[@]:1}"))
+  [[ "${sumfile_line[0]}" == "${checksum_line[-1]}" ]] || return 2
+}
+
+
 # Check timestamps and load newer iso and checksum files.
 _sync() {
   (( $# )) || return 1
-  wget -A "*.iso,*${CHECKSUM_FILE_EXTENSION:-.md5}" -r -nd -N "$1" \
-#    &>/dev/null
+  /usr/local/bin/wget -A "*.iso,*.md5" -r -nd -N "$1" &> /dev/null
 }
 
-
+# check checksums if a proper tool is available
 _check_checksum() {
   (( $# )) || return 1
-  local checksum_file="${1}.${CHECKSUM_FILE_EXTENSION/#./}"
+  local checksum_file="${1}.md5"
   [[ -r "$checksum_file" ]] || return 2
-  ${CHECKSUM_COMMAND} "${checksum_file}" &> /dev/null
+
+  if which md5sum &>/dev/null
+  then
+    md5sum -c "${checksum_file}" &> /dev/null || return 3
+  elif which md5 &> /dev/null
+  then
+    _md5_check "${checksum_file}" || return 3
+  else
+    _warn 5
+    return 0
+  fi
 }
 
-
-_make_torrent() {
-  (( $# )) || return 1
-  local torrent=${1}.torrent
-  [[ -e "${torrent}" ]] && [[ "${1}" -ot "${torrent}" ]] && return 0
-  ${MAKE_TORRENT_COMMAND} "${1}"
-}
-
-
-which wget >/dev/null || _quit 1
-which "${CHECKSUM_COMMAND%% *}" >/dev/null  || _quit 2
 
 cd "${TARGET_DIR}"
 
@@ -94,7 +97,6 @@ shopt -s nullglob
 for image in *.iso
 do
   _check_checksum "${image}" || _warn 4 "${image}"
-  _make_torrent "${image}" || _warn 5 "${image}"
 done
 
 _quit
