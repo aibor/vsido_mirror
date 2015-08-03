@@ -30,6 +30,9 @@ set -u
 TARGET_DIR='/srv/mirror.aibor.de/vsido/iso/'
 PROJECT_PAGE='http://www.nixnut.com/vsido/' 
 
+WGET_PATH=/usr/local/bin/wget
+MD5SUM_PATH=/usr/bin/md5sum
+MD5_PATH=/sbin/md5
 
 # map some exit messages to a return value
 declare -a MSG
@@ -55,11 +58,10 @@ _quit() {
 }
 
 
-# Check the checksum using the md5 tool available on FreeBSD
 _md5_check() {
   (( $# )) || return 1
   local -a sumfile_line=($(<$1))
-  local -a checksum_line=($(md5 "${sumfile_line[@]:1}"))
+  local -a checksum_line=($($MD5_PATH "${sumfile_line[@]:1}"))
   [[ "${sumfile_line[0]}" == "${checksum_line[-1]}" ]] || return 2
 }
 
@@ -67,19 +69,19 @@ _md5_check() {
 # Check timestamps and load newer iso and checksum files.
 _sync() {
   (( $# )) || return 1
-  /usr/local/bin/wget -A "*.iso,*.md5" -r -nd -N "$1" &> /dev/null
+  $WGET_PATH -A "*.iso,*.md5" -r -nd -N "$1" &> /dev/null
 }
 
-# check checksums if a proper tool is available
+
 _check_checksum() {
   (( $# )) || return 1
   local checksum_file="${1}.md5"
   [[ -r "$checksum_file" ]] || return 2
 
-  if which md5sum &>/dev/null
+  if [[ -x $MD5SUM_PATH ]]
   then
-    md5sum -c "${checksum_file}" &> /dev/null || return 3
-  elif which md5 &> /dev/null
+    $MD5SUM_PATH -c "${checksum_file}" &> /dev/null || return 3
+  elif [[ -x $MD5_PATH ]]
   then
     _md5_check "${checksum_file}" || return 3
   else
